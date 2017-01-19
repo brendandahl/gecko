@@ -1,0 +1,37 @@
+<html>
+<body>
+<div style="background-color: red;">I've lost my head</div>
+<div style="background-color: green;">I've lost my head</div>
+<div style="background-color: blue;">I've lost my head</div>
+<script type="text/javascript">
+// function dump(str) { console.log(str); }
+dump('>>> hello from js\n');
+function capture() {
+  var canvas = document.createElementNS('http://www.w3.org/1999/xhtml', 'html:canvas');
+  var context = canvas.getContext('2d');
+  dump('>>> window [width=' + window.innerWidth + ' height=' + window.innerHeight + ']\n');
+  var width = window.innerWidth;
+  var height = window.innerHeight;
+  canvas.width = width;
+  canvas.height = height;
+  context.drawWindow(
+    window,
+    0,
+    0,
+    width,
+    height,
+    'rgb(255, 255, 255)'
+  );
+
+  return canvas.toDataURL();
+};
+
+dump(capture() + '\n');
+
+const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
+Cu.import("resource:///modules/Runtime.jsm");
+Runtime.stop();
+
+</script>
+</body>
+</html>

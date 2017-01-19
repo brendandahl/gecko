@@ -240,6 +240,9 @@ nsAppStartup::CreateHiddenWindow()
 #if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_UIKIT)
   return NS_OK;
 #else
+  if (PR_GetEnv("MOZ_HEADLESS")) {
+    return NS_OK;
+  }
   nsCOMPtr<nsIAppShellService> appShellService
     (do_GetService(NS_APPSHELLSERVICE_CONTRACTID));
   NS_ENSURE_TRUE(appShellService, NS_ERROR_FAILURE);

@@ -1538,12 +1538,14 @@ ScopedXPCOMStartup::SetWindowCreator(nsINativeAppSupport* native)
 
   NS_IF_ADDREF(gNativeAppSupport = native);
 
-  // Inform the chrome registry about OS accessibility
-  nsCOMPtr<nsIToolkitChromeRegistry> cr =
-    mozilla::services::GetToolkitChromeRegistryService();
+  if (!EnvHasValue("MOZ_HEADLESS")) {
+    // Inform the chrome registry about OS accessibility
+    nsCOMPtr<nsIToolkitChromeRegistry> cr =
+      mozilla::services::GetToolkitChromeRegistryService();
 
-  if (cr)
-    cr->CheckForOSAccessibility();
+    if (cr)
+      cr->CheckForOSAccessibility();
+  }
 
   nsCOMPtr<nsIWindowCreator> creator (do_GetService(NS_APPSTARTUP_CONTRACTID));
   if (!creator) return NS_ERROR_UNEXPECTED;
@@ -1920,6 +1922,12 @@ ProfileLockedDialog(nsIFile* aProfileDir, nsIFile* aProfileLocalDir,
 
     if (!killMessage || !killTitle)
       return NS_ERROR_FAILURE;
+
+    if (PR_GetEnv("MOZ_HEADLESS")) {
+      // TODO: should probably  make a way to turn off all dialogs when headless.
+      printf("Profile locked.\n");
+      return NS_ERROR_FAILURE;
+    }
 
     nsCOMPtr<nsIPromptService> ps
       (do_GetService(NS_PROMPTSERVICE_CONTRACTID));
@@ -3514,6 +3522,9 @@ XREMain::XRE_mainInit(bool* aExitFlag)
     return 0;
   }
 
+  // SaveToEnv("MOZ_HEADLESS=1");
+  // printf(">>> MOZ_HEADLESS\n");
+
   rv = XRE_InitCommandLine(gArgc, gArgv);
   NS_ENSURE_SUCCESS(rv, 1);
 
@@ -3771,31 +3782,39 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
 
 #if defined(MOZ_WIDGET_GTK)
   // display_name is owned by gdk.
-  const char *display_name = gdk_get_display_arg_name();
+  const char *display_name = nullptr;
   bool saveDisplayArg = false;
-  if (display_name) {
-    saveDisplayArg = true;
-  } else {
-    display_name = detectDisplay();
-    if (!display_name) {
-      return 1;
+  if (!EnvHasValue("MOZ_HEADLESS")) {
+    display_name = gdk_get_display_arg_name();
+    if (display_name) {
+      saveDisplayArg = true;
+    } else {
+      display_name = detectDisplay();
+      if (!display_name) {
+        return 1;
+      }
     }
   }
 #endif /* MOZ_WIDGET_GTK */
 #ifdef MOZ_X11
   // Init X11 in thread-safe mode. Must be called prior to the first call to XOpenDisplay
   // (called inside gdk_display_open). This is a requirement for off main tread compositing.
-  XInitThreads();
+  if (!EnvHasValue("MOZ_HEADLESS")) {
+    XInitThreads();
+  }
 #endif
 #if defined(MOZ_WIDGET_GTK)
-  mGdkDisplay = gdk_display_open(display_name);
-  if (!mGdkDisplay) {
-    PR_fprintf(PR_STDERR, "Error: cannot open display: %s\n", display_name);
-    return 1;
+  printf(">>> EnvHasValue %d\n", EnvHasValue("MOZ_HEADLESS"));
+  if (!EnvHasValue("MOZ_HEADLESS")) {
+    mGdkDisplay = gdk_display_open(display_name);
+    if (!mGdkDisplay) {
+      PR_fprintf(PR_STDERR, "Error: cannot open display: %s\n", display_name);
+      return 1;
+    }
+    gdk_display_manager_set_default_display (gdk_display_manager_get(),
+                                             mGdkDisplay);
   }
-  gdk_display_manager_set_default_display (gdk_display_manager_get(),
-                                           mGdkDisplay);
-  if (GDK_IS_X11_DISPLAY(mGdkDisplay)) {
+  if (!EnvHasValue("MOZ_HEADLESS") && GDK_IS_X11_DISPLAY(mGdkDisplay)) {
     if (saveDisplayArg) {
       SaveWordToEnv("DISPLAY", nsDependentCString(display_name));
     }
@@ -4672,7 +4691,9 @@ XREMain::XRE_main(int argc, char* argv[], const XREAppData& aAppData)
 #ifdef MOZ_WIDGET_GTK
   // gdk_display_close also calls gdk_display_manager_set_default_display
   // appropriately when necessary.
-  MOZ_gdk_display_close(mGdkDisplay);
+  if (!PR_GetEnv("MOZ_HEADLESS")) {
+    MOZ_gdk_display_close(mGdkDisplay);
+  }
 #endif
 
 #ifdef MOZ_CRASHREPORTER
