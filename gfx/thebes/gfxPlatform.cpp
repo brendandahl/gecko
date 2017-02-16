@@ -835,6 +835,12 @@ gfxPlatform::InitMoz2DLogging()
     gfx::Factory::Init(cfg);
 }
 
+/* static */ bool
+gfxPlatform::IsHeadless()
+{
+    return PR_GetEnv("MOZ_HEADLESS");
+}
+
 static bool sLayersIPCIsUp = false;
 
 /* static */ void

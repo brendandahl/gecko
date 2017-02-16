@@ -73,6 +73,8 @@
 
 #include "nsPIWindowRoot.h"
 
+#include "gfxPlatform.h"
+
 #ifdef XP_MACOSX
 #include "nsINativeMenuService.h"
 #define USE_NATIVE_MENUS
@@ -149,7 +151,14 @@ nsresult nsWebShellWindow::Initialize(nsIXULWindow* aParent,
   DesktopIntRect deskRect(initialX, initialY, aInitialWidth, aInitialHeight);
 
   // Create top level window
-  mWindow = do_CreateInstance(kWindowCID, &rv);
+  if (gfxPlatform::IsHeadless()) {
+    mWindow = nsIWidget::CreatePuppetWidget(nullptr);
+    if (mWindow) {
+      rv = NS_OK;
+    }
+  } else {
+    mWindow = do_CreateInstance(kWindowCID, &rv);
+  }
   if (NS_OK != rv) {
     return rv;
   }

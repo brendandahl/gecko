@@ -528,10 +528,10 @@ nsAppShellService::CreateWindowlessBrowser(bool aIsChrome, nsIWindowlessBrowser 
     return NS_ERROR_FAILURE;
   }
   nsresult rv =
-    widget->Create(nullptr, 0, LayoutDeviceIntRect(0, 0, 0, 0), nullptr);
+    widget->Create(nullptr, 0, LayoutDeviceIntRect(0, 0, 640, 409), nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
   nsCOMPtr<nsIBaseWindow> window = do_QueryInterface(navigation);
-  window->InitWindow(0, widget, 0, 0, 0, 0);
+  window->InitWindow(0, widget, 0, 0, 640, 409);
   window->Create();
 
   nsISupports *isstub = NS_ISUPPORTS_CAST(nsIWebBrowserChrome2*, stub);
