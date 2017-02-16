@@ -77,7 +77,7 @@ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsClipboard, Init)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsDragService)
 #endif
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsSound)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsScreenManagerGtk)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIScreenManager, nsScreenManagerGtk::GetInstance)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsImageToPixbuf)
 
 
@@ -88,6 +88,9 @@ static nsresult
 nsNativeThemeGTKConstructor(nsISupports *aOuter, REFNSIID aIID,
                             void **aResult)
 {
+    if (PR_GetEnv("MOZ_HEADLESS")) {
+        return NS_ERROR_NO_INTERFACE;
+    }
     nsresult rv;
     nsNativeThemeGTK * inst;
 
@@ -243,7 +246,7 @@ static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
 #endif
     { &kNS_HTMLFORMATCONVERTER_CID, false, nullptr, nsHTMLFormatConverterConstructor },
     { &kNS_BIDIKEYBOARD_CID, false, nullptr, nsBidiKeyboardConstructor },
-    { &kNS_SCREENMANAGER_CID, false, nullptr, nsScreenManagerGtkConstructor,
+    { &kNS_SCREENMANAGER_CID, false, nullptr, nsIScreenManagerConstructor,
       Module::MAIN_PROCESS_ONLY },
     { &kNS_THEMERENDERER_CID, false, nullptr, nsNativeThemeGTKConstructor },
 #ifdef NS_PRINTING

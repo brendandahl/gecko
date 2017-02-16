@@ -4,8 +4,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsScreenManagerGtk.h"
+#include "nsScreenManagerHeadless.h"
 
 #include "mozilla/RefPtr.h"
+#include "mozilla/StaticPtr.h"
+#include "mozilla/ClearOnShutdown.h"
 #include "nsScreenGtk.h"
 #include "nsIComponentManager.h"
 #include "nsRect.h"
@@ -53,6 +56,23 @@ root_window_event_filter(GdkXEvent *aGdkXEvent, GdkEvent *aGdkEvent,
 #endif
 
   return GDK_FILTER_CONTINUE;
+}
+
+mozilla::StaticRefPtr<nsIScreenManager> sInstance;
+/* static */ already_AddRefed<nsIScreenManager>
+nsScreenManagerGtk::GetInstance()
+{
+  if (!sInstance) {
+    if (PR_GetEnv("MOZ_HEADLESS")) {
+      sInstance = new nsScreenManagerHeadless();
+    } else {
+      sInstance = new nsScreenManagerGtk();
+    }
+    ClearOnShutdown(&sInstance);
+  }
+
+  RefPtr<nsIScreenManager> service = sInstance.get();
+  return service.forget();
 }
 
 nsScreenManagerGtk :: nsScreenManagerGtk ( )

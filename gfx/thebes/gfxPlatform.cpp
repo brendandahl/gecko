@@ -48,6 +48,7 @@
 #elif defined(ANDROID)
 #include "gfxAndroidPlatform.h"
 #endif
+#include "gfxPlatformHeadless.h"
 
 #ifdef XP_WIN
 #include "mozilla/WindowsVersion.h"
@@ -676,17 +677,21 @@ gfxPlatform::Init()
     /* this currently will only succeed on Windows */
     gfxInfo = services::GetGfxInfo();
 
+    if (!PR_GetEnv("MOZ_HEADLESS")) {
 #if defined(XP_WIN)
-    gPlatform = new gfxWindowsPlatform;
+      gPlatform = new gfxWindowsPlatform;
 #elif defined(XP_MACOSX)
-    gPlatform = new gfxPlatformMac;
+      gPlatform = new gfxPlatformMac;
 #elif defined(MOZ_WIDGET_GTK)
-    gPlatform = new gfxPlatformGtk;
+      gPlatform = new gfxPlatformGtk;
 #elif defined(ANDROID)
-    gPlatform = new gfxAndroidPlatform;
+      gPlatform = new gfxAndroidPlatform;
 #else
-    #error "No gfxPlatform implementation available"
+      #error "No gfxPlatform implementation available"
 #endif
+    } else {
+      gPlatform = new gfxPlatformHeadless;
+    }
     gPlatform->InitAcceleration();
 
     if (gfxConfig::IsEnabled(Feature::GPU_PROCESS)) {
@@ -714,7 +719,12 @@ gfxPlatform::Init()
 
     bool usePlatformFontList = true;
 #if defined(MOZ_WIDGET_GTK)
-    usePlatformFontList = gfxPlatformGtk::UseFcFontList();
+    //  TODO: move this to a method on the gPlatform object
+    if (PR_GetEnv("MOZ_HEADLESS")) {
+      usePlatformFontList = gfxPlatformHeadless::UseFcFontList();
+    } else {
+      usePlatformFontList = gfxPlatformGtk::UseFcFontList();
+    }
 #endif
 
     if (usePlatformFontList) {

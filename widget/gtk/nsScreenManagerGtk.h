@@ -29,7 +29,7 @@ public:
 #ifdef MOZ_X11
   Atom NetWorkareaAtom() { return mNetWorkareaAtom; }
 #endif
-  
+  static already_AddRefed<nsIScreenManager> GetInstance();
   // For internal use, or reinitialization from change notification.
   nsresult Init();
 
