@@ -163,13 +163,6 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
             'gfxDWriteFonts.cpp',
         ]
 
-EXPORTS += [
-    'gfxPlatformHeadless.h',
-]
-SOURCES += [
-    'gfxPlatformHeadless.cpp',
-]
-
 # Are we targeting x86 or x64?  If so, build gfxAlphaRecoverySSE2.cpp.
 if CONFIG['INTEL_ARCHITECTURE']:
     SOURCES += ['gfxAlphaRecoverySSE2.cpp']
