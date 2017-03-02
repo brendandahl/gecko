@@ -63,7 +63,7 @@ mozilla::StaticRefPtr<nsIScreenManager> sInstance;
 nsScreenManagerGtk::GetInstance()
 {
   if (!sInstance) {
-    if (PR_GetEnv("MOZ_HEADLESS")) {
+    if (gfxPlatform::IsHeadless()) {
       sInstance = new nsScreenManagerHeadless();
     } else {
       sInstance = new nsScreenManagerGtk();

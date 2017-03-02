@@ -88,7 +88,7 @@ static nsresult
 nsNativeThemeGTKConstructor(nsISupports *aOuter, REFNSIID aIID,
                             void **aResult)
 {
-    if (PR_GetEnv("MOZ_HEADLESS")) {
+    if (gfxPlatform::IsHeadless()) {
         return NS_ERROR_NO_INTERFACE;
     }
     nsresult rv;

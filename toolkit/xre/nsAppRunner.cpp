@@ -1922,7 +1922,7 @@ ProfileLockedDialog(nsIFile* aProfileDir, nsIFile* aProfileLocalDir,
     if (!killMessage || !killTitle)
       return NS_ERROR_FAILURE;
 
-    if (PR_GetEnv("MOZ_HEADLESS")) {
+    if (gfxPlatform::IsHeadless()) {
       // TODO: make a way to turn off all dialogs when headless.
       Output(true, NS_LossyConvertUTF16toASCII(killMessage).get());
       return NS_ERROR_FAILURE;
@@ -3104,7 +3104,7 @@ XREMain::XRE_mainInit(bool* aExitFlag)
     printf_stderr("*** You are running in chaos test mode. See ChaosMode.h. ***\n");
   }
 
-  if (EnvHasValue("MOZ_HEADLESS")) {
+  if (gfxPlatform::IsHeadless()) {
     Output(false, "*** You are running in headless mode.\n");
   }
 
@@ -3768,7 +3768,7 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
   // display_name is owned by gdk.
   const char *display_name = nullptr;
   bool saveDisplayArg = false;
-  if (!EnvHasValue("MOZ_HEADLESS")) {
+  if (!gfxPlatform::IsHeadless()) {
     display_name = gdk_get_display_arg_name();
     if (display_name) {
       saveDisplayArg = true;
@@ -3783,12 +3783,12 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
 #ifdef MOZ_X11
   // Init X11 in thread-safe mode. Must be called prior to the first call to XOpenDisplay
   // (called inside gdk_display_open). This is a requirement for off main tread compositing.
-  if (!EnvHasValue("MOZ_HEADLESS")) {
+  if (!gfxPlatform::IsHeadless()) {
     XInitThreads();
   }
 #endif
 #if defined(MOZ_WIDGET_GTK)
-  if (!EnvHasValue("MOZ_HEADLESS")) {
+  if (!gfxPlatform::IsHeadless()) {
     mGdkDisplay = gdk_display_open(display_name);
     if (!mGdkDisplay) {
       PR_fprintf(PR_STDERR, "Error: cannot open display: %s\n", display_name);
@@ -3797,7 +3797,7 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
     gdk_display_manager_set_default_display (gdk_display_manager_get(),
                                              mGdkDisplay);
   }
-  if (!EnvHasValue("MOZ_HEADLESS") && GDK_IS_X11_DISPLAY(mGdkDisplay)) {
+  if (!gfxPlatform::IsHeadless() && GDK_IS_X11_DISPLAY(mGdkDisplay)) {
     if (saveDisplayArg) {
       SaveWordToEnv("DISPLAY", nsDependentCString(display_name));
     }
@@ -4729,7 +4729,7 @@ XREMain::XRE_main(int argc, char* argv[], const BootstrapConfig& aConfig)
 #ifdef MOZ_WIDGET_GTK
   // gdk_display_close also calls gdk_display_manager_set_default_display
   // appropriately when necessary.
-  if (!PR_GetEnv("MOZ_HEADLESS")) {
+  if (!gfxPlatform::IsHeadless()) {
     MOZ_gdk_display_close(mGdkDisplay);
   }
 #endif

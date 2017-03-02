@@ -263,7 +263,7 @@ nsXPLookAndFeel::GetInstance()
 
   NS_ENSURE_TRUE(!sShutdown, nullptr);
 
-  if (PR_GetEnv("MOZ_HEADLESS")) {
+  if (gfxPlatform::IsHeadless()) {
     sInstance = new nsLookAndFeelHeadless();
   } else {
     sInstance = new nsLookAndFeel();
