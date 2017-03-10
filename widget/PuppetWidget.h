@@ -202,6 +202,9 @@ public:
   // Paint the widget immediately if any paints are queued up.
   void PaintNowIfNeeded();
 
+  virtual bool IsPuppetWidget() override
+  { return true; }
+
   virtual TabChild* GetOwningTabChild() override { return mTabChild; }
 
   void UpdateBackingScaleCache(float aDpi, int32_t aRounding, double aScale)

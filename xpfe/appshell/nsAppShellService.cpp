@@ -226,8 +226,10 @@ class WebBrowserChrome2Stub : public nsIWebBrowserChrome2,
                               public nsIInterfaceRequestor,
                               public nsSupportsWeakReference {
 protected:
+    nsCOMPtr<nsIWebBrowser> mBrowser;
     virtual ~WebBrowserChrome2Stub() {}
 public:
+    WebBrowserChrome2Stub(nsIWebBrowser *aBrowser) : mBrowser(aBrowser) {}
     NS_DECL_ISUPPORTS
     NS_DECL_NSIWEBBROWSERCHROME
     NS_DECL_NSIWEBBROWSERCHROME2
@@ -356,7 +358,10 @@ WebBrowserChrome2Stub::GetDimensions(uint32_t flags, int32_t* x, int32_t* y, int
 NS_IMETHODIMP
 WebBrowserChrome2Stub::SetDimensions(uint32_t flags, int32_t x, int32_t y, int32_t cx, int32_t cy)
 {
-  return NS_ERROR_NOT_IMPLEMENTED;
+  nsCOMPtr<nsIBaseWindow> window = do_QueryInterface(mBrowser);
+  NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
+  window->SetSize(cx, cy, true);
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -508,7 +513,7 @@ nsAppShellService::CreateWindowlessBrowser(bool aIsChrome, nsIWindowlessBrowser 
    * an instance of WebBrowserChrome2Stub, which provides a stub implementation
    * of nsIWebBrowserChrome2.
    */
-  RefPtr<WebBrowserChrome2Stub> stub = new WebBrowserChrome2Stub();
+  RefPtr<WebBrowserChrome2Stub> stub = new WebBrowserChrome2Stub(browser);
   browser->SetContainerWindow(stub);
 
   nsCOMPtr<nsIWebNavigation> navigation = do_QueryInterface(browser);
@@ -528,10 +533,10 @@ nsAppShellService::CreateWindowlessBrowser(bool aIsChrome, nsIWindowlessBrowser 
     return NS_ERROR_FAILURE;
   }
   nsresult rv =
-    widget->Create(nullptr, 0, LayoutDeviceIntRect(0, 0, 640, 409), nullptr);
+    widget->Create(nullptr, 0, LayoutDeviceIntRect(0, 0, 0, 0), nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
   nsCOMPtr<nsIBaseWindow> window = do_QueryInterface(navigation);
-  window->InitWindow(0, widget, 0, 0, 640, 409);
+  window->InitWindow(0, widget, 0, 0, 0, 0);
   window->Create();
 
   nsISupports *isstub = NS_ISUPPORTS_CAST(nsIWebBrowserChrome2*, stub);

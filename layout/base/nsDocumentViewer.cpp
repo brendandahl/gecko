@@ -4292,7 +4292,7 @@ nsDocumentViewer::ShouldAttachToTopLevel()
     return false;
 
   // We always attach when using puppet widgets
-  if (nsIWidget::UsePuppetWidgets())
+  if (nsIWidget::UsePuppetWidgets() || mParentWidget->IsPuppetWidget())
     return true;
 
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_UIKIT)
