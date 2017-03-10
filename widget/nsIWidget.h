@@ -1881,6 +1881,11 @@ public:
     virtual bool HasGLContext() { return false; }
 
     /**
+     * Return true if widget is a puppet widget
+     */
+    virtual bool IsPuppetWidget() { return false; }
+
+    /**
      * Returns true to indicate that this widget paints an opaque background
      * that we want to be visible under the page, so layout should not force
      * a default background.

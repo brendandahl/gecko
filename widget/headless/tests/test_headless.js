@@ -51,12 +51,12 @@ add_task(function* test_snapshot() {
   let windowlessBrowser = Services.appShell.createWindowlessBrowser(false);
   let webNavigation = windowlessBrowser.QueryInterface(Ci.nsIWebNavigation);
   let contentWindow = yield loadContentWindow(webNavigation, HEADLESS_URL);
-  // TODO: support resizing the page
-  // const contentWidth = 300;
-  // const contentHeight = 200;
+  const contentWidth = 400;
+  const contentHeight = 300;
   // Verify dimensions.
-  // equal(contentWindow.innerWidth, contentWidth);
-  // equal(contentWindow.innerHeight, contentHeight);
+  contentWindow.resizeTo(contentWidth, contentHeight);
+  equal(contentWindow.innerWidth, contentWidth);
+  equal(contentWindow.innerHeight, contentHeight);
 
   // Snapshot the test page.
   let canvas = contentWindow.document.createElementNS('http://www.w3.org/1999/xhtml', 'html:canvas');
