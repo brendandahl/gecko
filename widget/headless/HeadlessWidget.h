@@ -73,13 +73,11 @@ public:
   virtual void SetInputContext(const InputContext& aContext,
                                const InputContextAction& aAction) override
   {
-    MOZ_ASSERT_UNREACHABLE("Headless widgets do not support input context.");
+    mInputContext = aContext;
   }
   virtual InputContext GetInputContext() override
   {
-    MOZ_ASSERT_UNREACHABLE("Headless widgets do not support input context.");
-    InputContext context;
-    return context;
+    return mInputContext;
   }
 
   virtual LayerManager*
@@ -94,6 +92,7 @@ private:
   ~HeadlessWidget() {}
   bool mEnabled;
   bool mVisible;
+  InputContext mInputContext;
 };
 
 } // namespace widget
