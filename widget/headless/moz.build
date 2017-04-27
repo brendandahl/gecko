@@ -20,6 +20,7 @@ UNIFIED_SOURCES += [
     'HeadlessClipboardData.cpp',
     'HeadlessLookAndFeel.cpp',
     'HeadlessScreenHelper.cpp',
+    'HeadlessSound.cpp',
     'HeadlessWidget.cpp',
 ]
 
