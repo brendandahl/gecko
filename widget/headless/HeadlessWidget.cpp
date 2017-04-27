@@ -75,6 +75,37 @@ HeadlessWidget::IsEnabled() const
   return mEnabled;
 }
 
+void
+HeadlessWidget::Move(double aX, double aY)
+{
+  double scale = BoundsUseDesktopPixels() ? GetDesktopToDeviceScale().scale : 1.0;
+  int32_t x = NSToIntRound(aX * scale);
+  int32_t y = NSToIntRound(aY * scale);
+
+  if (mWindowType == eWindowType_toplevel ||
+      mWindowType == eWindowType_dialog) {
+      SetSizeMode(nsSizeMode_Normal);
+  }
+
+  // Since a popup window's x/y coordinates are in relation to
+  // the parent, the parent might have moved so we always move a
+  // popup window.
+  if (x == mBounds.x && y == mBounds.y &&
+      mWindowType != eWindowType_popup) {
+    return;
+  }
+
+  mBounds.x = x;
+  mBounds.y = y;
+  NotifyRollupGeometryChange();
+}
+
+LayoutDeviceIntPoint
+HeadlessWidget::WidgetToScreenOffset()
+{
+  return LayoutDeviceIntPoint(mBounds.x, mBounds.y);
+}
+
 LayerManager*
 HeadlessWidget::GetLayerManager(PLayerTransactionChild* aShadowManager,
                                 LayersBackend aBackendHint,

@@ -37,10 +37,7 @@ public:
 
   virtual void Show(bool aState) override;
   virtual bool IsVisible() const override;
-  virtual void Move(double aX, double aY) override
-  {
-    MOZ_ASSERT_UNREACHABLE("Headless widgets do not support moving.");
-  }
+  virtual void Move(double aX, double aY) override;
   virtual void Resize(double aWidth,
                       double aHeight,
                       bool   aRepaint) override;
@@ -65,11 +62,7 @@ public:
     // Headless widgets have no title, so just ignore it.
     return NS_OK;
   }
-  virtual LayoutDeviceIntPoint WidgetToScreenOffset() override
-  {
-    // For now headless widgets cannot be moved, so always return 0,0.
-    return LayoutDeviceIntPoint(0, 0);
-  }
+  virtual LayoutDeviceIntPoint WidgetToScreenOffset() override;
   virtual void SetInputContext(const InputContext& aContext,
                                const InputContextAction& aAction) override
   {
