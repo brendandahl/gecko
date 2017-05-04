@@ -31,6 +31,7 @@ HeadlessWidget::Create(nsIWidget* aParent,
 
   BaseCreate(nullptr, aInitData);
   mBounds = aRect;
+  mRestoreBounds = aRect;
   mVisible = true;
   mEnabled = true;
   return NS_OK;
@@ -144,6 +145,43 @@ HeadlessWidget::Resize(double aX,
     NotifyWindowMoved(aX, aY);
   }
   return Resize(aWidth, aHeight, aRepaint);
+}
+
+void
+HeadlessWidget::SetSizeMode(nsSizeMode aMode)
+{
+  if (mSizeMode == nsSizeMode_Normal) {
+    // Store the last normal size bounds so it can be restored when entering
+    // normal mode again.
+    mRestoreBounds = mBounds;
+  }
+
+  nsBaseWidget::SetSizeMode(aMode);
+
+  // Normally in real widget backends a window event would be triggered that
+  // would cause the window manager to handle resizing the window. In headless
+  // the window must manually be resized.
+  switch(aMode) {
+  case nsSizeMode_Normal: {
+    Resize(mRestoreBounds.x, mRestoreBounds.y, mRestoreBounds.width, mRestoreBounds.height, false);
+    break;
+  }
+  case nsSizeMode_Minimized:
+    break;
+  case nsSizeMode_Maximized:
+  case nsSizeMode_Fullscreen: {
+    nsCOMPtr<nsIScreen> screen = GetWidgetScreen();
+    if (screen) {
+      int32_t left, top, width, height;
+      if (NS_SUCCEEDED(screen->GetRectDisplayPix(&left, &top, &width, &height))) {
+        Resize(0, 0, width, height, true);
+      }
+    }
+    break;
+  }
+  default:
+    break;
+  }
 }
 
 nsresult
