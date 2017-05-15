@@ -1663,6 +1663,10 @@ DumpHelp()
   printf("  --console          Start %s with a debugging console.\n", (const char*) gAppData->name);
 #endif
 
+#ifdef MOZ_WIDGET_GTK
+  printf("  --headless         Run without a GUI.\n");
+#endif
+
   // this works, but only after the components have registered.  so if you drop in a new command line handler, --help
   // won't not until the second run.
   // out of the bug, because we ship a component.reg file, it works correctly.
@@ -3140,6 +3144,10 @@ XREMain::XRE_mainInit(bool* aExitFlag)
 
   if (ChaosMode::isActive(ChaosFeature::Any)) {
     printf_stderr("*** You are running in chaos test mode. See ChaosMode.h. ***\n");
+  }
+
+  if (CheckArg("headless")) {
+    PR_SetEnv("MOZ_HEADLESS=1");
   }
 
   if (gfxPlatform::IsHeadless()) {
