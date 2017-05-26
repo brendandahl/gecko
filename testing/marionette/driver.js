@@ -1371,7 +1371,7 @@ GeckoDriver.prototype.setWindowRect = function* (cmd, resp) {
   let {x, y, width, height} = cmd.parameters;
 
   if (win.windowState == win.STATE_FULLSCREEN) {
-    win.document.exitFullscreen();
+    win.fullScreen = false;
   }
 
   if (height != null && width != null) {
@@ -2938,11 +2938,7 @@ GeckoDriver.prototype.fullscreen = function* (cmd, resp) {
   yield new Promise(resolve => {
     win.addEventListener("resize", resolve, {once: true});
 
-    if (win.windowState == win.STATE_FULLSCREEN) {
-      win.document.exitFullscreen();
-    } else {
-      win.document.documentElement.requestFullscreen();
-    }
+    win.fullScreen = !win.fullScreen;
   });
 
   resp.body = {
