@@ -228,6 +228,16 @@
 #include "mozilla/CodeCoverageHandler.h"
 #endif
 
+#if defined(XP_LINUX)
+#include <sys/prctl.h>
+#ifndef PR_SET_PTRACER
+#define PR_SET_PTRACER 0x59616d61
+#endif
+#ifndef PR_SET_PTRACER_ANY
+#define PR_SET_PTRACER_ANY ((unsigned long)-1)
+#endif
+#endif
+
 extern uint32_t gRestartMode;
 extern void InstallSignalHandlers(const char *ProgramName);
 
@@ -3838,6 +3848,20 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
   if (!aExitFlag)
     return 1;
   *aExitFlag = false;
+
+#ifdef OS_POSIX
+  if (PR_GetEnv("MOZ_DEBUG_PARENT_PROCESS") ||
+      PR_GetEnv("MOZ_DEBUG_PARENT_PAUSE")) {
+#if defined(XP_LINUX) && defined(DEBUG)
+    if (prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0) != 0) {
+      printf_stderr("Could not allow ptrace from any process.\n");
+    }
+#endif
+    printf_stderr("\n\nPARENTPARENTPARENTPARENT\n  debug me @ %d\n\n",
+                  base::GetCurrentProcId());
+    sleep(30);
+  }
+#endif
 
   SetShutdownChecks();
 
