@@ -1567,6 +1567,8 @@ class Document : public nsINode,
    */
   void DisconnectNodeTree();
 
+  static void DirectionChanged(const char* aPrefName, Document* aData);
+
  private:
   class SelectorCacheKey {
    public:
@@ -2031,6 +2033,8 @@ class Document : public nsINode,
   // This should only be called by callers whose state is also reflected in the
   // implementation of Document::GetDocumentState.
   void DocumentStatesChanged(mozilla::EventStates aStateMask);
+
+  void ResetDocumentDirection();
 
   // Observation hooks for style data to propagate notifications
   // to document observers
@@ -2883,7 +2887,7 @@ class Document : public nsINode,
    * pseudoclass so once can know whether a document is expected to be rendered
    * left-to-right or right-to-left.
    */
-  virtual bool IsDocumentRightToLeft() { return false; }
+  bool IsDocumentRightToLeft();
 
   /**
    * Called by Parser for link rel=preconnect

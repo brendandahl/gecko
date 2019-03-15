@@ -271,6 +271,7 @@
 #  include "mozilla/dom/XULBroadcastManager.h"
 #  include "mozilla/dom/XULPersist.h"
 #  include "nsIXULWindow.h"
+#  include "nsIChromeRegistry.h"
 #  include "nsXULPrototypeDocument.h"
 #  include "nsXULCommandDispatcher.h"
 #  include "nsXULPopupManager.h"
@@ -1568,6 +1569,12 @@ Document::~Document() {
     mXULPersist->DropDocumentReference();
   }
 
+  if (nsContentUtils::IsChromeDoc(this)) {
+    printf(">>> UnregisterCallback\n");
+    Preferences::UnregisterCallback(Document::DirectionChanged,
+                                    "intl.uidirection", this);
+  }
+
   delete mHeaderData;
 
   ClearAllBoxObjects();
@@ -1955,6 +1962,16 @@ nsresult Document::Init() {
   mFeaturePolicy->SetDefaultOrigin(NodePrincipal());
 
   mozilla::HoldJSObjects(this);
+
+  // TODO: !!!!!!!!!! This is too early, we need to find a place for this after
+  // the principal has been set or create some global listener that then
+  // notifies all chrome docs. Do we maintain a list of all documents loaded? It
+  // also needs to be a places that is shared between all document types.
+  if (nsContentUtils::IsChromeDoc(this)) {
+    printf(">>> register callback\n");
+    Preferences::RegisterCallback(Document::DirectionChanged,
+                                  "intl.uidirection", this);
+  }
 
   return NS_OK;
 }
@@ -8498,6 +8515,72 @@ nsresult Document::LoadChromeSheetSync(nsIURI* uri, bool isAgentSheet,
   css::SheetParsingMode mode =
       isAgentSheet ? css::eAgentSheetFeatures : css::eAuthorSheetFeatures;
   return CSSLoader()->LoadSheetSync(uri, mode, isAgentSheet, aSheet);
+}
+
+void Document::ResetDocumentDirection() {
+  if (!nsContentUtils::IsChromeDoc(this)) {
+    return;
+  }
+  DocumentStatesChanged(NS_DOCUMENT_STATE_RTL_LOCALE);
+}
+
+/* static */
+void Document::DirectionChanged(const char* aPrefName, Document* aDoc) {
+  // Reset the direction and restyle the document if necessary.
+  printf(">>> DirectionChanged\n");
+  if (aDoc) {
+    aDoc->ResetDocumentDirection();
+  }
+}
+
+bool Document::IsDocumentRightToLeft() {
+  if (!nsContentUtils::IsChromeDoc(this)) {
+    return false;
+  }
+  // setting the localedir attribute on the root element forces a
+  // specific direction for the document.
+  Element* element = GetRootElement();
+  if (element) {
+    static Element::AttrValuesArray strings[] = {nsGkAtoms::ltr, nsGkAtoms::rtl,
+                                                 nullptr};
+    switch (element->FindAttrValueIn(kNameSpaceID_None, nsGkAtoms::localedir,
+                                     strings, eCaseMatters)) {
+      case 0:
+        return false;
+      case 1:
+        return true;
+      default:
+        break;  // otherwise, not a valid value, so fall through
+    }
+  }
+
+  // otherwise, get the locale from the chrome registry and
+  // look up the intl.uidirection.<locale> preference
+  nsCOMPtr<nsIXULChromeRegistry> reg =
+      mozilla::services::GetXULChromeRegistryService();
+  if (!reg) return false;
+
+  nsAutoCString package;
+  bool isChrome;
+  if (NS_SUCCEEDED(mDocumentURI->SchemeIs("chrome", &isChrome)) && isChrome) {
+    mDocumentURI->GetHostPort(package);
+  } else {
+    // use the 'global' package for about and resource uris.
+    // otherwise, just default to left-to-right.
+    bool isAbout, isResource;
+    if (NS_SUCCEEDED(mDocumentURI->SchemeIs("about", &isAbout)) && isAbout) {
+      package.AssignLiteral("global");
+    } else if (NS_SUCCEEDED(mDocumentURI->SchemeIs("resource", &isResource)) &&
+               isResource) {
+      package.AssignLiteral("global");
+    } else {
+      return false;
+    }
+  }
+
+  bool isRTL = false;
+  reg->IsLocaleRTL(package, &isRTL);
+  return isRTL;
 }
 
 class nsDelayedEventDispatcher : public Runnable {
